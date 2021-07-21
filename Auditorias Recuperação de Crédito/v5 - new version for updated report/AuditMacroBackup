@@ -1,0 +1,179 @@
+Sub Execute(ByVal thisLine As Integer)
+    Call CreateSheets(thisLine)
+End Sub
+
+Sub CreateSheets(ByVal thisLine As Integer)
+    main = "Auditoria Bothomé"
+    n = thisLine
+    If Sheets(main).Cells(n, 7).Value = "Ativo" Then
+        nmr = Sheets(main).Cells(n, 2).Value
+        Worksheets.Add
+        aux = ActiveSheet.Name
+        Sheets(aux).Name = nmr
+        Call CopyModel(nmr, "Modelo")
+        Call FillSheet(nmr, main, n)
+    End If
+End Sub
+
+
+Sub CopyModel(ByVal copyTo As String, ByVal copyFrom As String)
+    For i = 1 To 3
+        For n = 1 To 50
+            Sheets(copyFrom).Cells(n, i).Copy
+            Sheets(copyTo).Cells(n, i).PasteSpecial Paste:=xlPasteFormats
+            Sheets(copyTo).Cells(n, i).PasteSpecial Paste:=xlPasteValues
+        Next n
+    Next i
+End Sub
+
+Sub FillSheet(ByVal copyTo As String, ByVal copyFrom As String, ByVal line As Integer)
+  For i = 1 To 26
+    For j = 1 To 23
+      If Sheets(copyTo).Cells(i, 1).Value = Sheets(copyFrom).Cells(7, j).Value Then
+        Sheets(copyTo).Cells(i, 2).Value = Sheets(copyFrom).Cells(line, j).Value
+      End If
+    Next j
+  Next i
+
+  'Ultimo andamento
+  Sheets(copyTo).Range("B11").Value = Sheets(copyFrom).Cells(line, 10).Value
+
+    With Sheets(copyTo)
+
+      .Range("B1").Value = DateValue(Format(Date, "dd/mm/yyyy"))
+      If IsDate(.Range("B10")) And IsDate(.Range("B9")) Then
+        .Range("C10") = .Range("B10") - .Range("B9")
+      End If
+      If IsDate(.Range("B11")) Then
+        .Range("C11") = .Range("B11") - .Range("B1")
+      End If
+
+      'Ponto 1
+      Dim xxi As Integer
+      Dim xxf As Double
+      xxi = 1
+
+      For i = 13 To 25
+        If .Cells(i, 2).Value <> "-" Then
+          xxi = xxi + 1
+        End If
+      Next i
+
+      xxf = .Range("B12").Value / xxi
+      For i = 13 To 25
+        If .Cells(i, 2).Value <> "-" Then
+          .Cells(i, 3).Value = xxf
+        End If
+      Next i
+      .Cells(26, 3).Value = xxf
+
+      'Ponto 2
+      If IsDate(.Range("B14")) And IsDate(.Range("B13")) Then
+        .Range("B28") = .Range("B14") - .Range("B13")
+      Else
+        .Range("B28") = "-"
+      End If
+
+      If IsNumeric(.Range("B28")) And .Range("B28") <= 90 Then
+        .Range("C28") = 0.2
+      Else
+        .Range("C28") = 0
+      End If
+
+      'Ponto 3
+      If .Range("C10").Value <= 15 Then
+        .Range("C30").Value = 0.15
+      ElseIf .Range("C10").Value <= 30 Then
+        .Range("C31").Value = 0.135
+      ElseIf .Range("C10").Value <= 60 Then
+        .Range("C32").Value = 0.12
+      ElseIf .Range("C10").Value <= 90 Then
+        .Range("C33").Value = 0.1
+      Else
+        .Range("C34").Value = 0
+      End If
+
+      'Ponto 4
+      If .Range("C11").Value <= 30 Then
+        .Range("C36").Value = 0.15
+      ElseIf .Range("C11").Value <= 60 Then
+        .Range("C37").Value = 0.135
+      ElseIf .Range("C11").Value <= 90 Then
+        .Range("C38").Value = 0.12
+      Else
+        .Range("C39").Value = 0
+      End If
+
+      xxf = 0
+      For i = 13 To 39
+        If .Cells(i, 3).Value <> "" Then
+          xxf = xxf + .Cells(i, 3)
+        End If
+      Next i
+
+      .Cells(47, 2).Value = xxf
+      .Columns("A:A").EntireColumn.AutoFit
+      .Columns("B:B").EntireColumn.AutoFit
+      .Columns("C:C").EntireColumn.AutoFit
+      .Rows("1:29").EntireRow.AutoFit
+
+      'Ponto 6
+      If .Range("B20") <> "-" Then
+        xxi = CountChrInString(.Range("B20"), "/")
+        If xxi > 1 Then
+          .Range("C42") = 0.15
+        ElseIf xxi = 1 Then
+          .Range("C42") = 0.12
+        Else
+          .Range("C42") = 0
+        End If
+      End If
+
+      'Total Auditado
+      xxtotal = 1
+
+      'Ponto 1
+      xxaux = 0
+      For i = 13 To 25
+        If .Cells(i, 2) <> "-" Then
+          xxaux = 1
+        End If
+      Next i
+
+      If xxaux = 0 Then
+        xxtotal = xxtotal - 0.2
+      End If
+
+      'Ponto 2
+      If .Range("B28") = "-" Then
+        xxtotal = xxtotal - 0.2
+      End If
+      .Range("B48") = xxtotal
+  End With
+
+End Sub
+
+Public Function CountChrInString(Expression As String, Character As String) As Long
+
+    Dim iResult As Long
+    Dim sParts() As String
+
+    sParts = Split(Expression, Character)
+
+    iResult = UBound(sParts, 1)
+
+    If (iResult = -1) Then
+        iResult = 0
+    End If
+
+    CountChrInString = iResult
+
+End Function
+
+Sub createModel()
+    Dim fieldsOne As Variant
+    fieldsOne = Array("Auditado", "Pasta Sistema", "Adverso", "Número", "Tipo de Ação", "Valor da Causa", "Status", "Documentos", "Data ajuizamento", "Ultimo andamento", "PONTO 01.", "Inicial protocolizada", "Citação", "Liminar deferida", "Embargos", "Decisões interlocutórias", "Ofícios expedidos", "Sentença", "Penhora", "Depósitos", "Acordão", "Recursos", "Cumprimento de sentença", "Juntada de petições relevantes para o regular", "Grui reembolso anexada", "PONTO 02.", "", "PONTO 03.", " 15 dias", "16 a 30 dias", "31 a 60 dias", "61 a 90 dias", "Acima de 90 dias", "PONTO 04.", "30 dias", "31 a 60 dias", "61 a 90 dias", "Acima de 90 dias", "PONTO 05.", "PONTO 06.", "5 requisitos apresentados", "Até 3 requisitos apresentados", "1 requisito apresentado", "Nenhum requisito apresentado", "", "PONTUAÇÃO", "TOTAL AUDITADO", "NOTA")
+
+    Dim fieldsTwo As Variant
+    fieldsTwo = Array("20%", "Citação dos devedores no prazo de até 90 dias da data do ajuizamento 3% dos processos estratégicos/peso máximo 20%", "Ajuizamento das demandas, peso máximo 15%", "Movimentação  15%", "15,00%", "13,50%", "12,00%", "10,50%", "0,00%")
+End Sub

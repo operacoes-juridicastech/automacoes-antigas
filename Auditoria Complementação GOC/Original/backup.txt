@@ -1,0 +1,126 @@
+Sub execute()
+    Dim wrk As Workbook
+    Dim sht As Worksheet
+    Dim path, n_conta, data_lanc, n_doc_trans, valor_trans As String
+    Dim i, j, ws_count, rw_count As Integer
+    Dim rw As Range
+
+    path = ActiveWorkbook.path & "\Extrato Detalhado ALTERADO"
+    Set wrk = Workbooks.Open(path)
+    
+    ws_count = wrk.Worksheets.Count
+
+    'Itera sobre todas as folhas da planilha.
+    For i = 1 To ws_count
+        
+        Set sht = wrk.Worksheets(i)
+        rw_count = 0
+        
+        'Conta o numero de linhas da folha.
+        For Each rw In sht.Rows
+            If sht.Cells(rw.Row, 1).Value = "" Then
+                Exit For
+            End If
+            rw_count = rw_count + 1
+        Next rw
+            
+        'Coleta os campos relevantes pra pesquisa.
+        For j = 2 To rw_count
+                
+            n_conta = sht.Range("E" & j).Value
+            data_lanc = sht.Range("I" & j).Value
+            n_doc_trans = sht.Range("K" & j).Value
+            valor_trans = sht.Range("L" & j).Value
+            
+            'Tratamento da data para comparação
+            data_lanc = Replace(data_lanc, "/", "")
+            If Left(data_lanc, 1) = "0" Then
+                data_lanc = Right(data_lanc, 7)
+            End If
+            
+            'If Len(n_conta) = 5 Then
+                'n_conta = "0" & n_conta
+            'End If
+            
+            'MsgBox n_conta & " - " & data_lanc & " - " & n_doc_trans & " - " & valor_trans
+            Call marker(n_conta, data_lanc, n_doc_trans, valor_trans)
+                
+        Next j
+    
+    Next i
+
+End Sub
+
+
+Sub marker(ByVal n_conta, ByVal data_lanc, ByVal n_doc_trans, ByVal valor_trans)
+    Dim wrk2 As Workbook
+    Dim sht2 As Worksheet
+    Dim k, rw_count2, lines(), size As Integer
+    Dim valor As Long
+    Dim rw2 As Range
+    
+    Set wrk2 = ThisWorkbook
+    Set sht2 = wrk2.Worksheets(1)
+    
+    size = 0
+    
+    ReDim lines(size)
+    
+    'Conta o número de linhas da folha.
+    rw_count2 = 0
+    For Each rw2 In sht2.Rows
+        If sht2.Cells(rw2.Row, 1).Value = "" Then
+            Exit For
+        End If
+        rw_count2 = rw_count2 + 1
+    Next rw2
+    
+    'Pega os indices das linhas com os campos iguais.
+    For k = 2 To rw_count2
+        
+        If sht2.Range("D" & k).Value = n_conta And CStr(sht2.Range("F" & k).Value) = data_lanc And sht2.Range("R" & k).Value = n_doc_trans Then
+            size = size + 1
+            ReDim Preserve lines(size)
+            lines(size) = k
+        End If
+        
+    Next k
+    
+    'Checa se o valor da transação bate.
+    valor = 0
+    For k = 1 To size
+        valor = valor + CLng(sht2.Range("J" & lines(k)).Value)
+    Next k
+    
+    If valor = valor_trans * 100 Then
+        
+        For k = 1 To size
+                
+                If sht2.Range("S" & lines(k)).Value = "" Or sht2.Range("S" & lines(k)).Value = "N/A" Then
+                    sht2.Range("S" & lines(k)).Interior.Color = RGB(255, 0, 0)
+                End If
+                
+                If sht2.Range("T" & lines(k)).Value = "" Or sht2.Range("T" & lines(k)).Value = "N/A" Then
+                    sht2.Range("T" & lines(k)).Interior.Color = RGB(255, 0, 0)
+                End If
+                
+                If sht2.Range("U" & lines(k)).Value = "" Or sht2.Range("U" & lines(k)).Value = "N/A" Then
+                    sht2.Range("U" & lines(k)).Interior.Color = RGB(255, 0, 0)
+                End If
+                
+                If sht2.Range("V" & lines(k)).Value = "" Or sht2.Range("V" & lines(k)).Value = "N/A" Then
+                    sht2.Range("V" & lines(k)).Interior.Color = RGB(255, 0, 0)
+                End If
+            
+        Next k
+        
+    End If
+    
+End Sub
+
+
+
+
+
+
+

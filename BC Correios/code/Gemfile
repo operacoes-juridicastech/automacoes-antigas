@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+gem 'ocra', '~> 1.3', '>= 1.3.10'
+gem 'ox', '~> 2.11'
+gem 'minitest'
+gem 'rubyXL', '~> 3.4', '>= 3.4.5'
+gem 'httparty', '~> 0.17.0'
+gem 'nokogiri', '~> 1.10', '>= 1.10.3'

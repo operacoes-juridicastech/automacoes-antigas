@@ -1,0 +1,196 @@
+Sub executar()
+    UserForm1.Show
+End Sub
+
+
+
+Sub FILTRA()
+
+    '
+    ' Macro3 Macro
+    '
+    
+    '
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    'ZFI.Select
+    'ZFI.Range("B:B").Copy Destination:=CAD.Range("I:I")
+    'CAD.Range("$I$1:$I$100000").RemoveDuplicates Columns:=1, Header:=xlYes
+    
+    Worksheets.Add
+    pla = ActiveSheet.Name
+    arq = ActiveWorkbook.Name
+    'P188.Select
+    
+    'Sheets(pla).Range("L:O").Delete
+    i = 3
+    While CAD.Cells(i, 1) <> ""
+        If WorksheetFunction.CountIfs(GERAL.Range("E:E"), CAD.Cells(i, 1)) = 0 _
+        And WorksheetFunction.CountIfs(ANALI.Range("B:B"), CAD.Cells(i, 1)) = 0 Then GoTo 1
+        If UCase(CAD.Cells(i, 3)) <> "ENVIAR" Then GoTo 1
+        
+         Workbooks.Add
+         arq1 = ActiveWorkbook.Name
+        
+         Sheets("Plan1").Name = "PROCESSOS GERAL"
+         Sheets("Plan2").Name = "PROCESSOS ANALÍTICO"
+         Sheets("Plan3").Delete
+        For p = 1 To 2
+            If p = 1 Then
+                 Workbooks(arq).Activate
+                 GERAL.Range("A1:AD1").Copy Destination:=Sheets(pla).Range("A3")
+                 Sheets(pla).Range("E4") = CAD.Cells(i, 1)
+                 
+                 GERAL.Range("A1:AD1000000").AdvancedFilter Action:=xlFilterCopy, _
+                     CriteriaRange:=Sheets(pla).Range("A3:AD4"), CopyToRange:=Sheets(pla).Range("A6:AD6"), Unique:=False
+                 ultima = Sheets(pla).Range("a1000000").End(xlUp).Row
+                 Sheets(pla).Range("A6:AD" & ultima).Copy Destination:=Workbooks(arq1).Sheets("PROCESSOS GERAL").Range("A1")
+                
+            Else
+                 Workbooks(arq).Activate
+                 Sheets(pla).Select
+                 
+                 ANALI.Range("A2:BD2").Copy Destination:=Sheets(pla).Range("A3")
+                 Sheets(pla).Range("B4") = CAD.Cells(i, 1)
+                 
+                 ANALI.Range("A2:BD1000000").AdvancedFilter Action:=xlFilterCopy, _
+                     CriteriaRange:=Sheets(pla).Range("A3:BD4"), CopyToRange:=Sheets(pla).Range("A6:BD6"), Unique:=False
+                 ultima = Sheets(pla).Range("a1000000").End(xlUp).Row
+                 Sheets(pla).Range("A6:BD" & ultima).Copy Destination:=Workbooks(arq1).Sheets("PROCESSOS ANALÍTICO").Range("A1")
+                
+                 'Range("6:1000000").Delete
+                 'pla2 = "COMP_CC"
+            End If
+             Sheets(pla).Columns("A:AD").Delete
+            ' If WorksheetFunction.CountIfs(Sheets(pla2).Range("B:B"), "AG" & RES.Cells(i, 1), Sheets(pla2).Range("J:J"), "ENVIAR") = 0 Then GoTo 1
+         
+        Next p
+         Workbooks(arq1).Activate
+         Sheets("PROCESSOS GERAL").Select
+         ActiveWindow.DisplayGridlines = False
+         ultima_arq3 = Sheets("PROCESSOS GERAL").Range("A100000").End(xlUp).Row
+         Range("A2:AD" & ultima_arq3).Select
+         Selection.WrapText = False
+         Cells.EntireColumn.AutoFit
+         Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+         Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+         Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+         Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+         Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+         Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+         
+         Sheets("PROCESSOS ANALÍTICO").Select
+         ActiveWindow.DisplayGridlines = False
+         ultima_arq3 = Sheets("PROCESSOS ANALÍTICO").Range("A100000").End(xlUp).Row
+         Range("A2:BD" & ultima_arq3).Select
+         Selection.WrapText = False
+         Cells.EntireColumn.AutoFit
+         Selection.Borders(xlEdgeLeft).LineStyle = xlContinuous
+         Selection.Borders(xlEdgeTop).LineStyle = xlContinuous
+         Selection.Borders(xlEdgeBottom).LineStyle = xlContinuous
+         Selection.Borders(xlEdgeRight).LineStyle = xlContinuous
+         Selection.Borders(xlInsideVertical).LineStyle = xlContinuous
+         Selection.Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        
+        
+        arq3 = "CONTROLE DE PROCESSOS " & CAD.Cells(i, 1) & ".xlsx"
+        arq_novo = "C:\Temp\" & arq3
+        
+        On Error Resume Next
+        Kill (arq_novo)
+        On Error GoTo 0
+        
+        ActiveWorkbook.SaveAs Filename:=arq_novo, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+        'Sheets("Plan3").Delete
+        'If WorksheetFunction.CountA(Sheets("COMP_CC").Range("A:A")) = 1 Then Sheets("COMP_CC").Delete
+        'If WorksheetFunction.CountA(Sheets("COMP_SAP").Range("A:A")) = 1 Then Sheets("COMP_SAP").Delete
+        Sheets("PROCESSOS GERAL").Select
+        If WorksheetFunction.CountA(Sheets("PROCESSOS GERAL").Range("A:A")) = 1 Then Sheets("PROCESSOS GERAL").Delete
+        If WorksheetFunction.CountA(Sheets("PROCESSOS ANALÍTICO").Range("A:A")) = 1 Then Sheets("PROCESSOS ANALITÍCO").Delete
+        
+        Workbooks(arq3).Save
+        Workbooks(arq3).Close
+        Call Email(i, arq_novo)
+        msg = msg & Format(CAD.Cells(i, 1), "0000") & vbLf
+        CAD.Cells(i, 3) = "ENVIADO"
+        Sheets(pla).Select
+        Range("4:100000").Delete
+        
+1            i = i + 1
+    Wend
+    GERAL.Select
+    'COMP.Range("K:K").Replace "ENVIAR", "ENVIADO"
+    
+    Sheets(pla).Delete
+    'CAD.Range("I:I").ClearContents
+    'CAPA.Select
+    Application.ScreenUpdating = True
+    MsgBox "E-mail´s enviados para as cooperativas:" & Chr(13) & msg
+
+End Sub
+
+Sub Email(i, arq_novo)
+
+    'Application.DisplayAlerts = False
+    'Application.ScreenUpdating = False
+    Application.Calculation = xlManual
+    
+    'Workbooks.Open Filename:="\\filecas01\custodia_operacoes\custodia\Diversos\Custódia-Assinaturas.xls"
+    'Sheets("Nomes").Activate
+    'usuario = Range("B2")
+    
+    Application.DisplayAlerts = False
+    Dim out, mail As Object
+    Dim PARA1, PARA2, ASSUNTO, TEXTO1, TEXTO2 As String
+    Dim ANEXO1 As String
+    ANEXO1 = arq_novo
+    'ANEXO2 = "C:\Temp\Relatório analítico.xlsx"
+    Set out = CreateObject("outlook.application")
+    Set mail = out.CreateItem(olMailItem)
+    
+    PARA = WorksheetFunction.VLookup(CAD.Cells(i, 1), CAD.Range("A:B"), 2, 0)
+    'DEST = WorksheetFunction.VLookup(RES.Cells(i, 1), CAD.Range("A:D"), 4, 0)
+    CCOPIA = CAD.Range("Z6")
+    ASSUNTO = Replace(CAD.Range("Z7"), "[COOP]", CAD.Cells(i, 1))
+    'ASSUNTO = Replace(ASSUNTO, "[DATA]", CDate(RES.Range("B2")))
+    TEXTO1 = Replace(CAD.Range("Z8"), "[COOP]", CAD.Cells(i, 1))
+    'TEXTO1 = Replace(TEXTO1, "[DATA]", CDate(RES.Range("B2")))
+    
+    'ASSINATURA
+    nome = CAD.Range("Z1")
+    cargo = CAD.Range("Z2")
+    area = CAD.Range("Z3")
+    empresa = CAD.Range("Z4")
+    contato = CAD.Range("Z5")
+    hora = Hour(Now())
+    If hora >= 12 And hora < 19 Then
+        saudação = "Boa tarde "
+    ElseIf hora >= 19 Or hora <= 6 Then
+        saudação = "Boa noite "
+    Else
+        saudação = "Bom dia "
+    End If
+    
+    
+    mail.To = PARA
+    mail.CC = CCOPIA
+    mail.Subject = ASSUNTO
+    mail.Body = saudação & "Colegas," & Chr(13) & Chr(13) _
+    & TEXTO1 & Chr(13) & Chr(13) _
+    & Chr(13) _
+    & "Att" & Chr(13) _
+    & nome & Chr(13) _
+    & cargo & Chr(13) _
+    & area & Chr(13) _
+    & empresa & Chr(13) _
+    & contato
+    mail.attachments.Add ANEXO1
+    'mail.attachments.Add ANEXO2
+    mail.Send
+    Set out = Nothing
+    
+    'Workbooks("Custódia-Assinaturas.xls").Save
+    'Workbooks("Custódia-Assinaturas.xls").Close
+
+End Sub
+
